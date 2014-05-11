@@ -1,16 +1,24 @@
+import gnu.io.CommPortIdentifier;
+
 import java.util.ArrayList;
+import java.util.Enumeration;
+
 import processing.core.PApplet;
 
 @SuppressWarnings("serial")
 public class Buttons extends PApplet {
-	
+
 	public ArrayList<PElement> elements;
 	public ArrayList<BWButton> buttons;
+	public String portName;
+	public SerialComm connect;
+	PText portText;
+	TextButton sendButton;
 
 	public static void main(String[] args) {
 		PApplet.main(new String[] {"Buttons"});
 	}
-	
+
 	public void setup() {
 		elements = new ArrayList<PElement>();
 		buttons = new ArrayList<BWButton>();
@@ -36,30 +44,30 @@ public class Buttons extends PApplet {
 			currY += height + yPad;
 			currX = startX;
 		}
-		PElement sendButton = new PElement(this, 130, 310, 50, 30) {
-			public void render() {
-				app.stroke(0);
-				app.fill(255);
-				app.rect(x, y, width, height);
-				int textSize = 16;
-				app.textSize(textSize);
-				app.fill(0);
-				app.text("Send", x + (width - app.textWidth("Send"))/2, y + textSize + (height - textSize)/2);
-			}
-			
+		sendButton = new TextButton(this, 130, 310, 50, 30, "Send", 16, 200, 200, 200) {
 			public void onClick() {
 				app.sendData();
 			}
 		};
 		elements.add(sendButton);
+		Thread detect = new Thread() {
+			public void run() {
+				getPort();
+			}
+		};
+		detect.start();
+		textSize(10);
+		portText = new PText(this, 200, 330, "Searching...", 10);
+		elements.add(portText);
 	}
-	
+
 	public void draw() {
+		background(255);
 		for(PElement element : elements){
 			element.render();
 		}
 	}
-	
+
 	public void mousePressed() {
 		for(PElement e : elements){
 			if(mouseX >= e.minX && mouseX <= e.maxX && mouseY >= e.minY && mouseY <= e.maxY){
@@ -67,7 +75,7 @@ public class Buttons extends PApplet {
 			}
 		}
 	}
-	
+
 	public void sendData() {
 		int bitIndex = 0;
 		int byteIndex = 0;
@@ -85,5 +93,36 @@ public class Buttons extends PApplet {
 			}
 		}
 		System.out.println("Byte: " + bytesToSend[14]);
+		if(connect == null) {
+			System.out.println("No connection to transmit");
+		} else {
+			connect.writeBytes(bytesToSend);
+		}
+	}
+
+	public void getPort() {
+		@SuppressWarnings("rawtypes")
+		Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
+		while (portEnum.hasMoreElements()) {
+			CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
+			String currPortName = currPortId.getName();
+			SerialComm test = new SerialComm();
+			test.initialize(currPortName);
+			try {Thread.sleep(2000);} catch (InterruptedException ie) {}
+			if(test.found) {
+				System.out.println("Found: " + currPortName);
+				portText.setText(currPortName, 12);
+				sendButton.setColor(0, 0, 0);
+				connect = test;
+				break;
+			} else {
+				System.out.println("Not found: " + currPortName);
+				test.close();
+			}
+		}
+		if(connect == null) {
+			portText.setText("Not found", 12);
+		}
+		System.out.println("Done");
 	}
 }

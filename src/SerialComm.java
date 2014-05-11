@@ -17,7 +17,7 @@ import java.util.Set;
 public class SerialComm implements SerialPortEventListener {
 	int bytes = 0;
 	SerialPort serialPort;
-	//static byte[] temps = new byte[12];
+	public boolean found = false;
 	private ArrayList<Byte> outBytes = new ArrayList<Byte>();
 	/** The port we're normally going to use. */
 	private static final String PORT_NAMES[] = new String[1];
@@ -104,6 +104,9 @@ public class SerialComm implements SerialPortEventListener {
 			bytes++;
 			try {
 				String inputLine=input.readLine();
+				if(inputLine.trim().equals("A")) {
+					found = true;
+				}
 				System.out.println(inputLine);
 			} catch (Exception e) {
 				System.err.println(e.toString());
@@ -131,17 +134,17 @@ public class SerialComm implements SerialPortEventListener {
 		// Ignore all the other eventTypes, but you should consider the other ones.
 	}
 
-	public String getPort(String[] arrWithout, String[] arrWith) {
-		Set<String> without = new HashSet<String>(Arrays.asList(arrWithout));
-		Set<String> with = new HashSet<String>(Arrays.asList(arrWith));
-		with.removeAll(without);
-		try {
-			String[] newports = with.toArray(new String[0]);
-			return newports[0];
-		} catch(ArrayIndexOutOfBoundsException e) {
-			return "Could not find port.";
-		}
-	}
+//	public String getPort(String[] arrWithout, String[] arrWith) {
+//		Set<String> without = new HashSet<String>(Arrays.asList(arrWithout));
+//		Set<String> with = new HashSet<String>(Arrays.asList(arrWith));
+//		with.removeAll(without);
+//		try {
+//			String[] newports = with.toArray(new String[0]);
+//			return newports[0];
+//		} catch(ArrayIndexOutOfBoundsException e) {
+//			return "Could not find port.";
+//		}
+//	}
 	
 	public void writeByte(byte in){
 		outBytes.add(in);
