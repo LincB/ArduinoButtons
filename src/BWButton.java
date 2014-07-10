@@ -1,6 +1,6 @@
 public class BWButton extends PElement {
 	
-	boolean isSelected;
+	public boolean isSelected;
 	
 	public BWButton(Buttons app, int x, int y, int width, int height) {
 		super(app, x, y, width, height);

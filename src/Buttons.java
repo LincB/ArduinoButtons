@@ -12,8 +12,11 @@ public class Buttons extends PApplet {
 	public ArrayList<BWButton> buttons;
 	public String portName;
 	public SerialComm connect;
+	public PTextBox selected;
+	PTextBox brailleBox;
 	PText portText;
 	TextButton sendButton;
+	TextButton zeroButton;
 
 	public static void main(String[] args) {
 		PApplet.main(new String[] {"Buttons"});
@@ -44,12 +47,23 @@ public class Buttons extends PApplet {
 			currY += height + yPad;
 			currX = startX;
 		}
-		sendButton = new TextButton(this, 130, 310, 50, 30, "Send", 16, 200, 200, 200) {
+		sendButton = new TextButton(this, 145, 310, 50, 30, "Send", 16, 200, 200, 200) {
 			public void onClick() {
 				app.sendData();
 			}
 		};
 		elements.add(sendButton);
+		zeroButton = new TextButton(this, 5, 310, 50, 30, "Zero", 16, 0, 0, 0) {
+			public void onClick() {
+				app.brailleBox.text = "";
+				for(int i = 0; i < 100; i++) {
+					app.buttons.get(i).isSelected = false;
+				}
+			}
+		};
+		elements.add(zeroButton);
+		brailleBox = new PTextBox(this, 70, 310, 70, 30, 16, 6);
+		elements.add(brailleBox);
 		Thread detect = new Thread() {
 			public void run() {
 				getPort();
@@ -57,8 +71,9 @@ public class Buttons extends PApplet {
 		};
 		detect.start();
 		textSize(10);
-		portText = new PText(this, 200, 330, "Searching...", 10);
+		portText = new PText(this, 205, 330, "Searching...", 10);
 		elements.add(portText);
+		BrailleConverter.init(buttons);
 	}
 
 	public void draw() {
@@ -76,7 +91,21 @@ public class Buttons extends PApplet {
 		}
 	}
 
+	public void keyPressed() {
+		if(selected != null) {
+			if(key >= 'a' && key <= 'z') {
+				selected.writeChar(key);
+			}
+			if(key == BACKSPACE) {
+				selected.backspace();
+			}
+		}
+	}
+
 	public void sendData() {
+		if(!brailleBox.text.equals("")) {
+			BrailleConverter.setButtons(brailleBox.text);
+		}
 		int bitIndex = 0;
 		int byteIndex = 0;
 		byte[] bytesToSend = new byte[15];
